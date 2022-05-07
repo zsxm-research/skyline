@@ -4,7 +4,7 @@
 	"main": "generated/server.js",
 	"license": "MIT",
 	"scripts": {
-		"prod": "yarn && yarn tsc && yarn prisma generate && yarn prisma db push && nodemon . -e gql,js,ts",
+		"prod": "yarn && yarn tsc && nodemon . -e gql,js,ts",
 		"dev": "yarn && yarn tsc && nodemon . -e gql,js,ts,json"
 	},
 	"dependencies": {
