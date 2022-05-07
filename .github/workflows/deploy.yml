@@ -1,0 +1,27 @@
+name: Deploy Skyline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-us:
+    name: Deploy US
+    runs-on: self-hosted
+    environment: production-us
+
+    steps:
+      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/hustleX-backend/_work/skylineskylinenode_modules || true
+      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/hustleX-backend/_work/skylineskylinegenerated || true
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+
+      - uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          envkey_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          envkey_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          envkey_RENDER_LANDING: false
+          file_name: .env
+      - run: docker-compose up -d --force-recreate
