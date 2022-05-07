@@ -12,8 +12,8 @@ jobs:
     environment: production-us
 
     steps:
-      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/skyline-server/_work/skylineskylinenode_modules || true
-      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/skyline-server/_work/skylineskylinegenerated || true
+      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/skyline-server/_work/skyline/skyline/node_modules || true
+      - run: echo ${{ secrets.KEY }} | sudo -S rm -rf /pools/pool-1/storagesmash/gh-runners/skyline-server/_work/skyline/skyline/generated || true
       - name: Checkout
         uses: actions/checkout@v2.4.0
 
