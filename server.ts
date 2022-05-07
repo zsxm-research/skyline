@@ -9,7 +9,7 @@ const server = new WebSocketServer({
 });
 
 server.addListener("connection", (ws) => {
-	console.log("Client connected: " + ws);
+	console.log("Client connected: " + JSON.stringify(ws));
 
 	ws.onmessage = (event) => {
 		console.log(event.data);
