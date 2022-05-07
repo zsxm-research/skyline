@@ -1,0 +1,18 @@
+{
+	"name": "skyline",
+	"version": "1.0.0",
+	"main": "generated/server.js",
+	"license": "MIT",
+	"scripts": {
+		"prod": "yarn && yarn tsc && yarn prisma generate && yarn prisma db push && nodemon . -e gql,js,ts",
+		"dev": "yarn && yarn tsc && nodemon . -e gql,js,ts,json"
+	},
+	"dependencies": {
+		"@types/node": "^17.0.31",
+		"@types/ws": "^8.5.3",
+		"dotenv": "^16.0.0",
+		"nodemon": "^2.0.16",
+		"typescript": "^4.6.4",
+		"ws": "^8.6.0"
+	}
+}

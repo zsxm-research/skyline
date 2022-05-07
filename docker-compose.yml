@@ -1,0 +1,14 @@
+version: "2"
+
+services:
+  skyline:
+    container_name: skyline
+    env_file: .env
+    ports:
+      - "8045:76"
+    image: node:16
+    restart: unless-stopped
+    working_dir: /usr/skyline/server
+    volumes:
+      - .:/usr/skyline/server
+    command: yarn prod
