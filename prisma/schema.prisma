@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Match {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime? @default(now())
+
+  blueAlliance String[]
+  redAlliance  String[]
+
+  blueScore Int
+  redScore  Int
+
+  blueAutoScore Int
+  redAutoScore  Int
+
+  blueTeleScore Int
+  redTeleScore  Int
+
+  redHangTraverse  Boolean
+  blueHangTraverse Boolean
+
+  redHangHigh  Boolean
+  blueHangHigh Boolean
+
+  redHangMid  Boolean
+  blueHangMid Boolean
+
+  redHangLow  Boolean
+  blueHangLow Boolean
+
+  blueEndScore Int
+  redEndScore  Int
+}
+
+model Alliance {
+  id           Int      @id @default(autoincrement())
+  teams        String[]
+  combindedOpr Float
+}
+
+model Team {
+  id            Int       @id
+  name          String
+  iconUrl       String
+  opr           Float
+  rankingPoints Float
+  rookieYear    Int
+  currentRank   Int
+  createdAt     DateTime? @default(now())
+}
