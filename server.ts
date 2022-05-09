@@ -8,11 +8,21 @@ const port = 3000;
 const TBA_KEY = process.env.TBA_KEY;
 
 const MOCKMESSAGE =
-	"blue:4:red:6:b_t:15:r_t:15:b_h:5:r_h:5:b_l:0:r_l:2:b_m:3:r_m:4:blue_alliance:[118?15.0;233?20]:red_alliance:[179?15.0;]:";
+	"blue:4:red:6:b_t:15:r_t:15:b_h:5:r_h:5:b_l:0:r_l:2:b_m:3:r_m:4:tel_b:4:blue_alliance:[118?15.0;233?20]:red_alliance:[179?15.0;]:";
 
 const server = new WebSocketServer({
 	port,
 });
+
+type AwardedRankingPoints = {
+	team: string;
+	points: number;
+};
+
+type MixedMatch = {
+	match: Match;
+	awardedRankingPoints: AwardedRankingPoints[];
+};
 
 const DATA_MAPPING = {
 	BLUE: "blue",
@@ -52,30 +62,33 @@ const RANKING_POINTS = {
 	HANGAR_BONUS: 1,
 };
 
-const parse = (msg: string): Match => {
+const parse = (msg: string): MixedMatch => {
 	const data = msg.split(":");
 
-	var match: Match = {
-		blueAlliance: [],
-		blueAutoScore: 0,
-		blueEndScore: 0,
-		blueTeleScore: 0,
-		blueHangHigh: false,
-		blueHangMid: false,
-		blueHangLow: false,
-		blueHangTraverse: false,
-		blueScore: 0,
-		createdAt: new Date(),
-		redAlliance: [],
-		id: 0,
-		redAutoScore: 0,
-		redEndScore: 0,
-		redTeleScore: 0,
-		redHangHigh: false,
-		redHangMid: false,
-		redHangLow: false,
-		redHangTraverse: false,
-		redScore: 0,
+	var mix: MixedMatch = {
+		awardedRankingPoints: [],
+		match: {
+			blueAlliance: [],
+			blueAutoScore: 0,
+			blueEndScore: 0,
+			blueTeleScore: 0,
+			blueHangHigh: false,
+			blueHangMid: false,
+			blueHangLow: false,
+			blueHangTraverse: false,
+			blueScore: 0,
+			createdAt: new Date(),
+			redAlliance: [],
+			id: 0,
+			redAutoScore: 0,
+			redEndScore: 0,
+			redTeleScore: 0,
+			redHangHigh: false,
+			redHangMid: false,
+			redHangLow: false,
+			redHangTraverse: false,
+			redScore: 0,
+		},
 	};
 
 	for (var e = 0; e < data.length; e++) {
@@ -84,51 +97,51 @@ const parse = (msg: string): Match => {
 
 		switch (id) {
 			case DATA_MAPPING.BLUE:
-				match.blueScore = Number(value);
+				mix.match.blueScore = Number(value);
 				break;
 
 			case DATA_MAPPING.RED:
-				match.redScore = Number(value);
+				mix.match.redScore = Number(value);
 				break;
 
 			case DATA_MAPPING.BLUE_TRAVERSE:
-				match.blueHangTraverse = Number(value) > 0;
+				mix.match.blueHangTraverse = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.RED_TRAVERSE:
-				match.redHangTraverse = Number(value) > 0;
+				mix.match.redHangTraverse = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.BLUE_HIGH:
-				match.blueHangHigh = Number(value) > 0;
+				mix.match.blueHangHigh = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.RED_HIGH:
-				match.redHangHigh = Number(value) > 0;
+				mix.match.redHangHigh = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.BLUE_MID:
-				match.blueHangMid = Number(value) > 0;
+				mix.match.blueHangMid = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.RED_MID:
-				match.redHangMid = Number(value) > 0;
+				mix.match.redHangMid = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.BLUE_LOW:
-				match.blueHangLow = Number(value) > 0;
+				mix.match.blueHangLow = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.RED_LOW:
-				match.redHangLow = Number(value) > 0;
+				mix.match.redHangLow = Number(value) > 0;
 				break;
 
 			case DATA_MAPPING.TELEOP_BLUE:
-				match.blueTeleScore = Number(value);
+				mix.match.blueTeleScore = Number(value);
 				break;
 
 			case DATA_MAPPING.TELEOP_RED:
-				match.redTeleScore = Number(value);
+				mix.match.redTeleScore = Number(value);
 				break;
 
 			case DATA_MAPPING.BLUE_ALLIANCE:
@@ -141,13 +154,21 @@ const parse = (msg: string): Match => {
 				for (var i = 0; i < raw.length; i++) {
 					var element = raw[i];
 					var team = element.split("?")[0];
+					var opr = element.split("?")[1];
+
+					if (opr != null && opr != "") {
+						mix.awardedRankingPoints.push({
+							team: team,
+							points: Number(opr),
+						});
+					}
 
 					if (i != raw.length && team != null && team != "") {
 						teams = [...teams, team];
 					}
 				}
 
-				match.blueAlliance = [...match.blueAlliance, ...teams];
+				mix.match.blueAlliance = [...mix.match.blueAlliance, ...teams];
 				break;
 
 			case DATA_MAPPING.RED_ALLIANCE:
@@ -160,20 +181,28 @@ const parse = (msg: string): Match => {
 				for (var i = 0; i < raw_.length; i++) {
 					var element = raw_[i];
 					var team = element.split("?")[0];
+					var opr = element.split("?")[1];
+
+					if (opr != null && opr != "") {
+						mix.awardedRankingPoints.push({
+							team: team,
+							points: Number(opr),
+						});
+					}
 
 					if (i != raw_.length && team != null && team != "") {
 						teams = [...teams, team];
 					}
 				}
 
-				match.redAlliance = [...match.redAlliance, ...teams];
+				mix.match.redAlliance = [...mix.match.redAlliance, ...teams];
 				break;
 		}
 	}
 
-	console.log(match);
+	console.log(mix);
 
-	return match;
+	return mix;
 };
 
 parse(MOCKMESSAGE);
