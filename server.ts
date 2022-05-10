@@ -10,7 +10,7 @@ const port = 3000;
 const TBA_KEY = process.env.TBA_KEY || "";
 
 const MOCKMESSAGE =
-	"blue:4:red:6:b_t:15:r_t:15:b_h:5:r_h:5:b_l:0:r_l:2:b_m:3:r_m:4:tel_b:4:blue_alliance:[118?15.0;233?2000;6323?8;45?45;55?505;]:red_alliance:[179?15.0;364?40;2455?6;8767?70;254?7;]:";
+	"blue:4:red:6:b_t:15:r_t:15:b_h:5:r_h:5:b_l:0:r_l:2:b_m:3:r_m:4:tel_b:4:blue_alliance:[118?15.0;233?2000;6323?8;]:red_alliance:[179?15.0;364?40;254?7;]:";
 
 const prisma = new PrismaClient();
 
