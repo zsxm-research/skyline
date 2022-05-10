@@ -6,6 +6,7 @@ services:
     env_file: .env
     ports:
       - "8998:3000"
+      - "8999:3001"
     image: node:16
     restart: unless-stopped
     working_dir: /usr/skyline/server

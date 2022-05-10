@@ -49,12 +49,10 @@ model Alliance {
 }
 
 model Team {
-  id            Int       @id
+  id            String    @id
   name          String
   iconUrl       String
   opr           Float
   rankingPoints Float
-  rookieYear    Int
-  currentRank   Int
   createdAt     DateTime? @default(now())
 }
