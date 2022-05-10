@@ -1,0 +1,4 @@
+TEAMS = []
+MATCH_COUNT = 50
+ALLIANCE_PLAYER_COUNT = 4
+FILE_OUTPUT = "qual_matchlist.csv"

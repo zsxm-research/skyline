@@ -360,5 +360,3 @@ server.addListener("connection", (ws) => {
 		await uploadMatch(message);
 	};
 });
-
-uploadMatch(MOCKMESSAGE);
