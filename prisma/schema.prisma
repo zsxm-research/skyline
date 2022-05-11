@@ -28,6 +28,9 @@ model Match {
   blueScore Int
   redScore  Int
 
+  penalties_blue Int
+  penalties_red  Int
+
   blueAutoScore Int
   redAutoScore  Int
 

@@ -5,7 +5,7 @@ import { WebSocketServer } from "ws";
 import { Server } from "socket.io";
 import axios from "axios";
 
-const port = 3000;
+const port = 8998;
 
 const TBA_KEY = process.env.TBA_KEY || "";
 
@@ -74,8 +74,14 @@ const DATA_MAPPING = {
 	TELEOP_BLUE: "tel_b",
 	TELEOP_RED: "tel_r",
 
+	AUTO_BLUE: "auto_b",
+	AUTO_RED: "auto_r",
+
 	BLUE_ALLIANCE: "blue_alliance",
 	RED_ALLIANCE: "red_alliance",
+
+	PENALTIES_BLUE: "pen_b",
+	PENALTIES_RED: "pen_r",
 };
 
 const SERVER_EVENTS = {
@@ -131,6 +137,8 @@ const parse = (msg: string): MixedMatch => {
 			redHangLow: false,
 			redHangTraverse: false,
 			redScore: 0,
+			penalties_blue: 0,
+			penalties_red: 0,
 		},
 	};
 
@@ -187,6 +195,14 @@ const parse = (msg: string): MixedMatch => {
 				mix.match.redTeleScore = Number(value);
 				break;
 
+			case DATA_MAPPING.PENALTIES_BLUE:
+				mix.match.penalties_blue = Number(value);
+				break;
+
+			case DATA_MAPPING.PENALTIES_RED:
+				mix.match.penalties_red = Number(value);
+				break;
+
 			case DATA_MAPPING.BLUE_ALLIANCE:
 				var teams: string[] = [];
 				const raw = msg
@@ -203,6 +219,17 @@ const parse = (msg: string): MixedMatch => {
 						mix.awardedRankingPoints.push({
 							team: team,
 							points: Number(opr),
+						});
+					}
+
+					// This if condition is a placeholder
+					if (opr == null || opr == "") {
+						const blueScore = Number(msg.split(DATA_MAPPING.BLUE + ":")[1]);
+						const redScore = Number(msg.split(DATA_MAPPING.RED + ":")[1]);
+
+						mix.awardedRankingPoints.push({
+							team: team,
+							points: 0,
 						});
 					}
 
