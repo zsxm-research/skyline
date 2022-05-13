@@ -345,7 +345,7 @@ const updateTeam = async (
 				total += opr || 0;
 			});
 
-			total = awardedRankingPoints.points;
+			total += awardedRankingPoints.points;
 
 			return total;
 		};
@@ -357,7 +357,7 @@ const updateTeam = async (
 				average += opr || 0;
 			});
 
-			average = awardedRankingPoints.points;
+			average += awardedRankingPoints.points;
 
 			return average / (opr.length + 1);
 		};
