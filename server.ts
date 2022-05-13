@@ -222,17 +222,6 @@ const parse = (msg: string): MixedMatch => {
 						});
 					}
 
-					// This if condition is a placeholder
-					if (opr == null || opr == "") {
-						const blueScore = Number(msg.split(DATA_MAPPING.BLUE + ":")[1]);
-						const redScore = Number(msg.split(DATA_MAPPING.RED + ":")[1]);
-
-						mix.awardedRankingPoints.push({
-							team: team,
-							points: 0,
-						});
-					}
-
 					if (i != raw.length && team != null && team != "") {
 						teams = [...teams, team];
 					}
@@ -295,6 +284,8 @@ const createTeam = async (
 			name: team.nickname,
 			opr: 0,
 			rankingPoints: rankingPoints || 0,
+			loss: 0,
+			won: 0,
 		};
 
 		await prisma.team.create({
@@ -310,6 +301,8 @@ const createTeam = async (
 			name: "Unknown",
 			opr: 0,
 			rankingPoints: rankingPoints || 0,
+			loss: 0,
+			won: 0,
 		};
 
 		await prisma.team.create({
@@ -317,6 +310,68 @@ const createTeam = async (
 		});
 
 		return newTeam;
+	}
+};
+
+const updateTeam = async (team: string, isLoss: boolean) => {
+	if (team != null && team != "") {
+		if (isLoss) {
+			const t = await prisma.team.findUnique({
+				where: {
+					id: team,
+				},
+			});
+
+			if (t != null) {
+				await prisma.team.update({
+					where: {
+						id: team,
+					},
+					data: {
+						loss: t.loss + 1,
+					},
+				});
+			} else {
+				const nt = await createTeam(team);
+
+				await prisma.team.update({
+					where: {
+						id: nt.id,
+					},
+					data: {
+						loss: nt.loss + 1,
+					},
+				});
+			}
+		} else {
+			const t = await prisma.team.findUnique({
+				where: {
+					id: team,
+				},
+			});
+
+			if (t != null) {
+				await prisma.team.update({
+					where: {
+						id: team,
+					},
+					data: {
+						won: t.won + 1,
+					},
+				});
+			} else {
+				const nt = await createTeam(team);
+
+				await prisma.team.update({
+					where: {
+						id: nt.id,
+					},
+					data: {
+						won: nt.won + 1,
+					},
+				});
+			}
+		}
 	}
 };
 
@@ -340,18 +395,13 @@ const uploadMatch = async (message: string) => {
 
 	const { awardedRankingPoints, match } = parse(message);
 
-	awardedRankingPoints.forEach(async (e, i) => {
-		const index = teams.findIndex((t) => t.id == e.team);
-		var newTeam = teams[index];
+	match.blueAlliance.forEach(
+		async (team) => await updateTeam(team, match.blueScore < match.redScore)
+	);
 
-		if (newTeam != null) {
-			newTeam.rankingPoints = newTeam.rankingPoints + e.points;
-
-			teams[index] = newTeam;
-		} else {
-			newTeam = await createTeam(e.team, e.points);
-		}
-	});
+	match.redAlliance.forEach(
+		async (team) => await updateTeam(team, match.redScore < match.blueScore)
+	);
 
 	var matches = await prisma.match.findMany();
 

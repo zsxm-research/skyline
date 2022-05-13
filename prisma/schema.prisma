@@ -65,5 +65,7 @@ model Team {
   iconUrl       String
   opr           Float
   rankingPoints Float
+  won           Int
+  loss          Int
   createdAt     DateTime? @default(now())
 }
