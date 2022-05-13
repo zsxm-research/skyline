@@ -10,12 +10,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model MatchList {
+model PlayerOpr {
   id        Int       @id @default(autoincrement())
   createdAt DateTime? @default(now())
 
-  blueAlliance String[]
-  redAlliance  String[]
+  team    String?
+  opr     Int?
+  matchId Int?
+  Match   Match?  @relation(fields: [matchId], references: [id])
 }
 
 model Match {
@@ -25,11 +27,14 @@ model Match {
   blueAlliance String[]
   redAlliance  String[]
 
+  playerOpr PlayerOpr[]
+
   blueScore Int
   redScore  Int
 
-  penalties_blue Int
-  penalties_red  Int
+  penalties_blue Int @default(0)
+  penalties_red  Int @default(0)
+
 
   blueAutoScore Int
   redAutoScore  Int
@@ -63,9 +68,10 @@ model Team {
   id            String    @id
   name          String
   iconUrl       String
-  opr           Float
+  ap            Float     @default(0)
   rankingPoints Float
-  won           Int
-  loss          Int
+  won           Int       @default(0)
+  loss          Int       @default(0)
   createdAt     DateTime? @default(now())
+  totalPoints   Float     @default(0)
 }

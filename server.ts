@@ -10,7 +10,7 @@ const port = 8998;
 const TBA_KEY = process.env.TBA_KEY || "";
 
 const MOCKMESSAGE =
-	"blue:4:red:6:b_t:15:r_t:15:b_h:5:r_h:5:b_l:0:r_l:2:b_m:3:r_m:4:tel_b:4:blue_alliance:[118?15.0;233?2000;6323?8;]:red_alliance:[179?15.0;364?40;254?7;]:";
+	"blue:108:red:78:b_t:0:r_t:0:b_h:0:r_h:0:r_m:0:b_m:0:r_l:0:b_l:0:tel_r:62:tel_b:0:auto_b:0:auto_r:16:pen_b:0:pen_r:0:blue_alliance:[179?20;364?6000;]:red_alliance:[233?130;118?5000;]";
 
 const prisma = new PrismaClient();
 
@@ -269,52 +269,99 @@ const updateClients = (matches: Match[], ranking: Team[]) => {
 	console.log("Updating clients...");
 };
 
-const createTeam = async (
-	id: string,
-	rankingPoints?: number
-): Promise<Team> => {
-	const req = await sendTBA(`/team/frc${id}`);
-	var team = req.data as tba_team;
+const createTeam = async (id: string, rankingPoints?: number): Promise<Team> =>
+	sendTBA(`/team/frc${id}`)
+		.then(async ({ status, data }) => {
+			var team = data as tba_team;
 
-	if (req.status === 200) {
-		const newTeam: Team = {
-			createdAt: new Date(),
-			iconUrl: "",
-			id: id,
-			name: team.nickname,
-			opr: 0,
-			rankingPoints: rankingPoints || 0,
-			loss: 0,
-			won: 0,
-		};
+			if (status === 200) {
+				const newTeam: Team = {
+					createdAt: new Date(),
+					iconUrl: "",
+					id: id,
+					name: team.nickname,
+					ap: 0,
+					totalPoints: 0,
+					rankingPoints: rankingPoints || 0,
+					loss: 0,
+					won: 0,
+				};
 
-		await prisma.team.create({
-			data: newTeam,
+				await prisma.team.create({
+					data: newTeam,
+				});
+
+				return newTeam;
+			} else {
+				const newTeam: Team = {
+					createdAt: new Date(),
+					iconUrl: "",
+					id: id,
+					name: "Unknown",
+					ap: 0,
+					totalPoints: 0,
+					rankingPoints: rankingPoints || 0,
+					loss: 0,
+					won: 0,
+				};
+
+				await prisma.team.create({
+					data: newTeam,
+				});
+
+				return newTeam;
+			}
+		})
+		.catch((err) => {
+			return {
+				createdAt: new Date(),
+				iconUrl: "",
+				id: id,
+				name: "Unknown",
+				ap: 0,
+				totalPoints: 0,
+				rankingPoints: rankingPoints || 0,
+				loss: 0,
+				won: 0,
+			} as Team;
 		});
 
-		return newTeam;
-	} else {
-		const newTeam: Team = {
-			createdAt: new Date(),
-			iconUrl: "",
-			id: id,
-			name: "Unknown",
-			opr: 0,
-			rankingPoints: rankingPoints || 0,
-			loss: 0,
-			won: 0,
-		};
-
-		await prisma.team.create({
-			data: newTeam,
-		});
-
-		return newTeam;
-	}
-};
-
-const updateTeam = async (team: string, isLoss: boolean) => {
+const updateTeam = async (
+	team: string,
+	isLoss: boolean,
+	awardedRankingPoints: AwardedRankingPoints
+) => {
 	if (team != null && team != "") {
+		const opr = await prisma.playerOpr.findMany({
+			where: {
+				team: team,
+			},
+		});
+
+		const totalPoints = (): number => {
+			let total = 0;
+
+			opr.map(({ opr }) => {
+				total += opr || 0;
+			});
+
+			total = awardedRankingPoints.points;
+
+			return total;
+		};
+
+		const averagePoints = (): number => {
+			let average = 0;
+
+			opr.map(({ opr }) => {
+				average += opr || 0;
+			});
+
+			average = awardedRankingPoints.points;
+
+			return average / (opr.length + 1);
+		};
+
 		if (isLoss) {
 			const t = await prisma.team.findUnique({
 				where: {
@@ -329,19 +376,45 @@ const updateTeam = async (team: string, isLoss: boolean) => {
 					},
 					data: {
 						loss: t.loss + 1,
+						ap: averagePoints(),
+						totalPoints: totalPoints(),
 					},
 				});
 			} else {
 				const nt = await createTeam(team);
 
-				await prisma.team.update({
+				const foundTeam = await prisma.team.findUnique({
 					where: {
 						id: nt.id,
 					},
-					data: {
-						loss: nt.loss + 1,
-					},
 				});
+
+				if (foundTeam != null) {
+					await prisma.team.update({
+						where: {
+							id: nt.id,
+						},
+						data: {
+							...nt,
+							totalPoints: totalPoints(),
+							ap: averagePoints(),
+							loss: nt.loss + 1,
+						},
+					});
+				} else {
+					await prisma.team.create({
+						data: {
+							loss: nt.loss + 1,
+							ap: averagePoints(),
+							totalPoints: totalPoints(),
+							iconUrl: nt.iconUrl,
+							id: nt.id,
+							name: nt.name,
+							rankingPoints: nt.rankingPoints,
+							won: nt.won,
+						},
+					});
+				}
 			}
 		} else {
 			const t = await prisma.team.findUnique({
@@ -357,6 +430,8 @@ const updateTeam = async (team: string, isLoss: boolean) => {
 					},
 					data: {
 						won: t.won + 1,
+						ap: averagePoints(),
+						totalPoints: totalPoints(),
 					},
 				});
 			} else {
@@ -368,6 +443,8 @@ const updateTeam = async (team: string, isLoss: boolean) => {
 					},
 					data: {
 						won: nt.won + 1,
+						ap: averagePoints(),
+						totalPoints: totalPoints(),
 					},
 				});
 			}
@@ -395,26 +472,46 @@ const uploadMatch = async (message: string) => {
 
 	const { awardedRankingPoints, match } = parse(message);
 
-	match.blueAlliance.forEach(
-		async (team) => await updateTeam(team, match.blueScore < match.redScore)
-	);
+	match.blueAlliance.forEach(async (team) => {
+		const teamRankingPoints = awardedRankingPoints.find((e, index) => {
+			if (e.team === team) {
+				return e;
+			}
+		}) || { points: 0, team: team };
 
-	match.redAlliance.forEach(
-		async (team) => await updateTeam(team, match.redScore < match.blueScore)
-	);
+		await updateTeam(team, match.blueScore < match.redScore, teamRankingPoints);
+	});
+
+	match.redAlliance.forEach(async (team) => {
+		const teamRankingPoints = awardedRankingPoints.find((e, index) => {
+			if (e.team === team) {
+				return e;
+			}
+		}) || { points: 0, team: team };
+
+		await updateTeam(team, match.redScore < match.blueScore, teamRankingPoints);
+	});
 
 	var matches = await prisma.match.findMany();
 
-	prisma.team.updateMany({
-		data: awardedRankingPoints,
-	});
-
 	matches = [...matches, match];
+
+	const matchId = matches.sort((e, b) => b.id - e.id)[0].id + 1;
 
 	await prisma.match.create({
 		data: {
 			...match,
-			id: matches.sort((e, b) => b.id - e.id)[0].id + 1,
+			id: matchId,
+			playerOpr: {
+				createMany: {
+					data: awardedRankingPoints.map((g) => {
+						return {
+							team: g.team,
+							opr: g.points,
+						};
+					}),
+				},
+			},
 		},
 	});
 
@@ -433,6 +530,8 @@ socketIO.on("connection", (socket) => {
 server.addListener("connection", (ws) => {
 	ws.onmessage = async (event) => {
 		const message = String(event.data);
+
+		console.log(message);
 
 		await uploadMatch(message);
 	};
